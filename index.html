@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DiceDuel — Web</title>
+
+  <!-- Bootstrap (CDN) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    /* Page & header */
+    body { background:#f4f6f9; color:#212529; }
+    .brand {
+      display:inline-flex; align-items:center; gap:.5rem;
+      padding:.5rem .9rem; border-radius:999px;
+      background:linear-gradient(135deg,#e9f2ff,#f3f9ff);
+      border:1px solid #e3eaf5;
+      box-shadow:0 6px 18px rgba(13,110,253,.12);
+    }
+    .mini-label { font-size:.8rem; color:#6c757d; }
+    .player-name { font-weight:700; color:#0d6efd; }
+    .scoreline { color:#6c757d; }
+
+    /* Dice */
+    .die {
+      width:120px; height:120px;
+      border:3px solid var(--die-border,#dee2e6); border-radius:18px;
+      background:var(--die-bg,#fff); margin:0 auto; position:relative;
+      box-shadow:0 10px 22px rgba(0,0,0,.10), inset 0 0 0 4px rgba(255,255,255,.25);
+      transition:transform .12s ease, box-shadow .12s ease;
+    }
+    .die:active { transform: scale(.98); box-shadow:0 6px 16px rgba(0,0,0,.12); }
+    .pip {
+      width:16px; height:16px; border-radius:50%;
+      background:var(--pip,#212529);
+      position:absolute; transform:translate(-50%,-50%);
+      filter: drop-shadow(0 1px 0 rgba(0,0,0,.2));
+    }
+    .p-tl{top:20%;left:20%}.p-tc{top:20%;left:50%}.p-tr{top:20%;left:80%}
+    .p-ml{top:50%;left:20%}.p-mc{top:50%;left:50%}.p-mr{top:50%;left:80%}
+    .p-bl{top:80%;left:20%}.p-bc{top:80%;left:50%}.p-br{top:80%;left:80%}
+
+    /* Dice themes */
+    .theme-classic { --die-bg:#ffffff; --die-border:#e1e5eb; --pip:#1f2328; }
+    .theme-red     { --die-bg:#e63946; --die-border:#b02a36; --pip:#ffffff; }
+    .theme-sky     { --die-bg:#90e0ef; --die-border:#48bfe3; --pip:#d90429; }
+
+    /* Result chip */
+    .result {
+      font-weight:800; font-size:1.4rem; display:inline-block;
+      padding:.35rem .9rem; border-radius:999px; border:1px solid transparent;
+    }
+    .result.win { color:#0f5132; background:#d1e7dd; border-color:#badbcc; }
+    .result.tie { color:#664d03; background:#fff3cd; border-color:#ffecb5; }
+
+    .hand { font-size:32px; line-height:1; }
+  </style>
+</head>
+
+<body class="py-4">
+  <h1 class="text-center mb-2">
+    <span class="brand"><span style="font-size:1.4rem">🎲</span><span>DiceDuel — Web</span></span>
+  </h1>
+  <p class="text-center text-muted mb-4">
+    Hold <kbd>Space</kbd> to spin • Release to stop • <kbd>R</kbd> reset scores
+  </p>
+
+  <div class="container">
+    <div class="row text-center align-items-start g-4 justify-content-center">
+      <!-- Player 1 -->
+      <div class="col-12 col-md-4">
+        <input id="p1" class="form-control text-center mb-2" value="Player 1" />
+        <div class="mini-label">Die color</div>
+        <select id="t1" class="form-select form-select-sm mb-2" style="max-width:180px;margin:0 auto;">
+          <option value="theme-classic" selected>Classic (white)</option>
+          <option value="theme-red">Red with white pips</option>
+          <option value="theme-sky">Sky blue with red pips</option>
+        </select>
+        <div id="die1" class="die theme-classic" aria-label="Player 1 die"></div>
+        <div class="mt-2 player-name" id="name1">Player 1</div>
+      </div>
+
+      <!-- Player 2 -->
+      <div class="col-12 col-md-4">
+        <input id="p2" class="form-control text-center mb-2" value="Player 2" />
+        <div class="mini-label">Die color</div>
+        <select id="t2" class="form-select form-select-sm mb-2" style="max-width:180px;margin:0 auto;">
+          <option value="theme-classic" selected>Classic (white)</option>
+          <option value="theme-red">Red with white pips</option>
+          <option value="theme-sky">Sky blue with red pips</option>
+        </select>
+        <div id="die2" class="die theme-classic" aria-label="Player 2 die"></div>
+        <div class="mt-2 player-name" id="name2">Player 2</div>
+      </div>
+    </div>
+
+    <div class="text-center mt-4">
+      <div id="result" class="result"></div>
+      <div id="hand" class="hand mt-2"></div>
+      <p class="scoreline mt-2">Score — <span id="s1">0</span> : <span id="s2">0</span> • ties: <span id="st">0</span></p>
+    </div>
+  </div>
+
+  <!-- Footer with your links -->
+  <footer class="text-center mt-5 py-4 border-top">
+    <p class="mb-1">Made with ❤️ by <strong>RolbitDev</strong></p>
+    <a href="https://www.linkedin.com/in/roland82" class="btn btn-outline-primary btn-sm mx-1" target="_blank" rel="noopener">
+      💼 LinkedIn
+    </a>
+    <a href="https://rolbitdev.odoo.com/" class="btn btn-outline-dark btn-sm mx-1" target="_blank" rel="noopener">
+      🌐 rolbitdev.odoo.com
+    </a>
+    <a href="https://www.instagram.com/rolbitdev?igsh=cXBnYm1mcXZwcThy" class="btn btn-outline-danger btn-sm mx-1" target="_blank" rel="noopener">
+      📸 Instagram
+    </a>
+  </footer>
+
+  <script>
+    let timer = null, spinning = false, p1Wins = 0, p2Wins = 0, ties = 0;
+    const die1 = document.getElementById('die1'), die2 = document.getElementById('die2');
+    const resEl = document.getElementById('result'), handEl = document.getElementById('hand');
+    const p1El = document.getElementById('p1'), p2El = document.getElementById('p2');
+    const name1 = document.getElementById('name1'), name2 = document.getElementById('name2');
+    const s1 = document.getElementById('s1'), s2 = document.getElementById('s2'), st = document.getElementById('st');
+    const t1 = document.getElementById('t1'), t2 = document.getElementById('t2');
+
+    function randDie(){ return Math.floor(Math.random()*6)+1; }
+    function applyThemes(){
+      die1.classList.remove('theme-classic','theme-red','theme-sky');
+      die2.classList.remove('theme-classic','theme-red','theme-sky');
+      die1.classList.add(t1.value);
+      die2.classList.add(t2.value);
+    }
+    t1.addEventListener('change', applyThemes);
+    t2.addEventListener('change', applyThemes);
+
+    function renderDie(face,el){
+      el.innerHTML='';
+      const map={1:['p-mc'],2:['p-tl','p-br'],3:['p-tl','p-mc','p-br'],
+                 4:['p-tl','p-tr','p-bl','p-br'],5:['p-tl','p-tr','p-mc','p-bl','p-br'],
+                 6:['p-tl','p-tr','p-ml','p-mr','p-bl','p-br']};
+      map[face].forEach(cls=>{
+        const pip=document.createElement('div');
+        pip.className='pip '+cls; el.appendChild(pip);
+      });
+    }
+    function updateScore(){ s1.textContent=p1Wins; s2.textContent=p2Wins; st.textContent=ties; }
+
+    function startSpin(){
+      if(spinning) return;
+      spinning = true;
+      resEl.textContent=''; resEl.className='result'; handEl.textContent='';
+      timer = setInterval(()=>{ renderDie(randDie(),die1); renderDie(randDie(),die2); }, 60);
+    }
+
+    function stopSpin(){
+      if(!spinning) return;
+      spinning = false;
+      clearInterval(timer);
+      applyThemes();
+
+      const v1 = randDie(), v2 = randDie();
+      renderDie(v1,die1); renderDie(v2,die2);
+
+      const n1 = p1El.value.trim() || 'Player 1';
+      const n2 = p2El.value.trim() || 'Player 2';
+      name1.textContent = n1; name2.textContent = n2;
+
+      if(v1 > v2){
+        p1Wins++; resEl.className='result win';
+        resEl.textContent = `${n1} WINS! (${v1} vs ${v2})`;
+        handEl.textContent = '🖐️ →';
+      } else if(v2 > v1){
+        p2Wins++; resEl.className='result win';
+        resEl.textContent = `${n2} WINS! (${v2} vs ${v1})`;
+        handEl.textContent = '← 🖐️';
+      } else {
+        ties++; resEl.className='result tie';
+        resEl.textContent = `It’s a tie! (${v1} vs ${v2})`;
+        handEl.textContent = '🤝';
+      }
+      updateScore();
+    }
+
+    window.addEventListener('keydown',e=>{
+      if(e.repeat) return;
+      if(e.code==='Space' && document.activeElement.tagName!=='INPUT'){ e.preventDefault(); startSpin(); }
+      if(e.code==='KeyR'){ p1Wins=0; p2Wins=0; ties=0; updateScore(); }
+    });
+    window.addEventListener('keyup',e=>{
+      if(e.code==='Space' && document.activeElement.tagName!=='INPUT'){ stopSpin(); }
+    });
+
+    applyThemes();
+    renderDie(1,die1); renderDie(1,die2);
+    updateScore();
+  </script>
+</body>
+</html>
