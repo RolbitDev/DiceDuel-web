@@ -5,12 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>DiceDuel — Web</title>
 
+  <!-- Meta / favicon -->
+  <meta name="description" content="DiceDuel — a colorful two-player dice game in your browser. Hold Space (or press the big button on mobile) to spin, release to stop, and keep score!" />
+  <meta name="theme-color" content="#0d6efd" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' ry='22' fill='%23ffffff' stroke='%230d6efd' stroke-width='6'/%3E%3Ccircle cx='30' cy='30' r='8' fill='%23212529'/%3E%3Ccircle cx='70' cy='70' r='8' fill='%23212529'/%3E%3Ccircle cx='70' cy='30' r='8' fill='%23212529'/%3E%3Ccircle cx='30' cy='70' r='8' fill='%23212529'/%3E%3Ccircle cx='50' cy='50' r='8' fill='%23212529'/%3E%3C/svg%3E" />
+
   <!-- Bootstrap (CDN) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <style>
     /* Page & header */
-    body { background:#f4f6f9; color:#212529; }
+    body { background:#f4f6f9; color:#212529; -webkit-tap-highlight-color: transparent; }
     .brand {
       display:inline-flex; align-items:center; gap:.5rem;
       padding:.5rem .9rem; border-radius:999px;
@@ -22,7 +27,7 @@
     .player-name { font-weight:700; color:#0d6efd; }
     .scoreline { color:#6c757d; }
 
-    /* Dice */
+    /* Dice core */
     .die {
       width:120px; height:120px;
       border:3px solid var(--die-border,#dee2e6); border-radius:18px;
@@ -30,21 +35,29 @@
       box-shadow:0 10px 22px rgba(0,0,0,.10), inset 0 0 0 4px rgba(255,255,255,.25);
       transition:transform .12s ease, box-shadow .12s ease;
     }
-    .die:active { transform: scale(.98); box-shadow:0 6px 16px rgba(0,0,0,.12); }
     .pip {
       width:16px; height:16px; border-radius:50%;
       background:var(--pip,#212529);
       position:absolute; transform:translate(-50%,-50%);
       filter: drop-shadow(0 1px 0 rgba(0,0,0,.2));
     }
+    /* pip positions */
     .p-tl{top:20%;left:20%}.p-tc{top:20%;left:50%}.p-tr{top:20%;left:80%}
     .p-ml{top:50%;left:20%}.p-mc{top:50%;left:50%}.p-mr{top:50%;left:80%}
     .p-bl{top:80%;left:20%}.p-bc{top:80%;left:50%}.p-br{top:80%;left:80%}
 
-    /* Dice themes */
+    /* Dice themes (CSS vars) */
     .theme-classic { --die-bg:#ffffff; --die-border:#e1e5eb; --pip:#1f2328; }
     .theme-red     { --die-bg:#e63946; --die-border:#b02a36; --pip:#ffffff; }
     .theme-sky     { --die-bg:#90e0ef; --die-border:#48bfe3; --pip:#d90429; }
+
+    /* Spin animation */
+    @keyframes roll {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(10deg) scale(1.02); }
+      100% { transform: rotate(0deg) scale(1); }
+    }
+    .spinning { animation: roll .28s linear infinite; }
 
     /* Result chip */
     .result {
@@ -55,17 +68,31 @@
     .result.tie { color:#664d03; background:#fff3cd; border-color:#ffecb5; }
 
     .hand { font-size:32px; line-height:1; }
+
+    /* Mobile spin button */
+    .spin-btn {
+      touch-action: none; /* ensure touch events arrive */
+      font-weight:700;
+      padding: .9rem 1.2rem;
+    }
   </style>
 </head>
 
 <body class="py-4">
+  <!-- Title -->
   <h1 class="text-center mb-2">
     <span class="brand"><span style="font-size:1.4rem">🎲</span><span>DiceDuel — Web</span></span>
   </h1>
-  <p class="text-center text-muted mb-4">
-    Hold <kbd>Space</kbd> to spin • Release to stop • <kbd>R</kbd> reset scores
+  <p class="text-center text-muted mb-3">
+    Desktop: Hold <kbd>Space</kbd> to spin • Release to stop • <kbd>R</kbd> reset scores
   </p>
 
+  <!-- Mobile controls -->
+  <div class="text-center mb-4 d-md-none">
+    <button id="btnSpin" class="btn btn-primary spin-btn">👉 Hold to Spin</button>
+  </div>
+
+  <!-- Players / Dice -->
   <div class="container">
     <div class="row text-center align-items-start g-4 justify-content-center">
       <!-- Player 1 -->
@@ -95,6 +122,7 @@
       </div>
     </div>
 
+    <!-- Result + Score -->
     <div class="text-center mt-4">
       <div id="result" class="result"></div>
       <div id="hand" class="hand mt-2"></div>
@@ -102,29 +130,58 @@
     </div>
   </div>
 
-  <!-- Footer with your links -->
+  <!-- Footer -->
   <footer class="text-center mt-5 py-4 border-top">
     <p class="mb-1">Made with ❤️ by <strong>RolbitDev</strong></p>
-    <a href="https://www.linkedin.com/in/roland82" class="btn btn-outline-primary btn-sm mx-1" target="_blank" rel="noopener">
-      💼 LinkedIn
-    </a>
-    <a href="https://rolbitdev.odoo.com/" class="btn btn-outline-dark btn-sm mx-1" target="_blank" rel="noopener">
-      🌐 rolbitdev.odoo.com
-    </a>
-    <a href="https://www.instagram.com/rolbitdev?igsh=cXBnYm1mcXZwcThy" class="btn btn-outline-danger btn-sm mx-1" target="_blank" rel="noopener">
-      📸 Instagram
-    </a>
+    <a href="https://www.linkedin.com/in/roland82" class="btn btn-outline-primary btn-sm mx-1" target="_blank" rel="noopener">💼 LinkedIn</a>
+    <a href="https://rolbitdev.odoo.com/" class="btn btn-outline-dark btn-sm mx-1" target="_blank" rel="noopener">🌐 rolbitdev.odoo.com</a>
+    <a href="https://www.instagram.com/rolbitdev?igsh=cXBnYm1mcXZwcThy" class="btn btn-outline-danger btn-sm mx-1" target="_blank" rel="noopener">📸 Instagram</a>
   </footer>
 
+  <!-- Game Logic -->
   <script>
-    let timer = null, spinning = false, p1Wins = 0, p2Wins = 0, ties = 0;
-    const die1 = document.getElementById('die1'), die2 = document.getElementById('die2');
-    const resEl = document.getElementById('result'), handEl = document.getElementById('hand');
-    const p1El = document.getElementById('p1'), p2El = document.getElementById('p2');
-    const name1 = document.getElementById('name1'), name2 = document.getElementById('name2');
-    const s1 = document.getElementById('s1'), s2 = document.getElementById('s2'), st = document.getElementById('st');
-    const t1 = document.getElementById('t1'), t2 = document.getElementById('t2');
+    // ---- State ----
+    let timer=null, spinning=false, p1Wins=0, p2Wins=0, ties=0;
 
+    // DOM
+    const die1=document.getElementById('die1'), die2=document.getElementById('die2');
+    const resEl=document.getElementById('result'), handEl=document.getElementById('hand');
+    const p1El=document.getElementById('p1'), p2El=document.getElementById('p2');
+    const name1=document.getElementById('name1'), name2=document.getElementById('name2');
+    const s1=document.getElementById('s1'), s2=document.getElementById('s2'), st=document.getElementById('st');
+    const t1=document.getElementById('t1'), t2=document.getElementById('t2');
+    const btnSpin=document.getElementById('btnSpin');
+
+    // ---- Audio (WebAudio: soft rolling noise) ----
+    let audioCtx=null, noiseSrc=null, gainNode=null;
+    function startSound(){
+      if(!audioCtx){ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
+      // pink-ish noise
+      const bufferSize = 2 * audioCtx.sampleRate;
+      const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i=0;i<bufferSize;i++){ output[i] = (Math.random()*2-1) * 0.25; }
+      noiseSrc = audioCtx.createBufferSource();
+      noiseSrc.buffer = noiseBuffer;
+      noiseSrc.loop = true;
+      gainNode = audioCtx.createGain();
+      gainNode.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.08, audioCtx.currentTime + 0.15);
+      noiseSrc.connect(gainNode).connect(audioCtx.destination);
+      noiseSrc.start();
+    }
+    function stopSound(){
+      if(gainNode){
+        try{
+          gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.12);
+        }catch{}
+      }
+      if(noiseSrc){
+        setTimeout(()=>{ try{ noiseSrc.stop(); }catch{} }, 150);
+      }
+    }
+
+    // ---- Helpers ----
     function randDie(){ return Math.floor(Math.random()*6)+1; }
     function applyThemes(){
       die1.classList.remove('theme-classic','theme-red','theme-sky');
@@ -147,51 +204,79 @@
     }
     function updateScore(){ s1.textContent=p1Wins; s2.textContent=p2Wins; st.textContent=ties; }
 
+    // ---- Spin control ----
     function startSpin(){
       if(spinning) return;
       spinning = true;
       resEl.textContent=''; resEl.className='result'; handEl.textContent='';
-      timer = setInterval(()=>{ renderDie(randDie(),die1); renderDie(randDie(),die2); }, 60);
-    }
+      die1.classList.add('spinning'); die2.classList.add('spinning');
+      // start audio (mobile: must be triggered by user gesture)
+      startSound();
 
+      timer=setInterval(()=>{
+        renderDie(randDie(),die1);
+        renderDie(randDie(),die2);
+      }, 60);
+    }
     function stopSpin(){
       if(!spinning) return;
       spinning = false;
       clearInterval(timer);
-      applyThemes();
+      stopSound();
+      die1.classList.remove('spinning'); die2.classList.remove('spinning');
+      applyThemes(); // keep theme applied
 
-      const v1 = randDie(), v2 = randDie();
+      const v1=randDie(), v2=randDie();
       renderDie(v1,die1); renderDie(v2,die2);
 
-      const n1 = p1El.value.trim() || 'Player 1';
-      const n2 = p2El.value.trim() || 'Player 2';
-      name1.textContent = n1; name2.textContent = n2;
+      const n1=p1El.value.trim()||'Player 1', n2=p2El.value.trim()||'Player 2';
+      name1.textContent=n1; name2.textContent=n2;
 
-      if(v1 > v2){
+      if(v1>v2){
         p1Wins++; resEl.className='result win';
-        resEl.textContent = `${n1} WINS! (${v1} vs ${v2})`;
-        handEl.textContent = '🖐️ →';
-      } else if(v2 > v1){
+        resEl.textContent=`${n1} WINS! (${v1} vs ${v2})`;
+        handEl.textContent='🖐️ →';
+      }else if(v2>v1){
         p2Wins++; resEl.className='result win';
-        resEl.textContent = `${n2} WINS! (${v2} vs ${v1})`;
-        handEl.textContent = '← 🖐️';
-      } else {
+        resEl.textContent=`${n2} WINS! (${v2} vs ${v1})`;
+        handEl.textContent='← 🖐️';
+      }else{
         ties++; resEl.className='result tie';
-        resEl.textContent = `It’s a tie! (${v1} vs ${v2})`;
-        handEl.textContent = '🤝';
+        resEl.textContent=`It’s a tie! (${v1} vs ${v2})`;
+        handEl.textContent='🤝';
       }
       updateScore();
     }
 
-    window.addEventListener('keydown',e=>{
+    // ---- Desktop keyboard ----
+    window.addEventListener('keydown', e=>{
       if(e.repeat) return;
-      if(e.code==='Space' && document.activeElement.tagName!=='INPUT'){ e.preventDefault(); startSpin(); }
+      if(e.code==='Space' && document.activeElement.tagName!=='INPUT'){
+        e.preventDefault(); startSpin();
+      }
       if(e.code==='KeyR'){ p1Wins=0; p2Wins=0; ties=0; updateScore(); }
     });
-    window.addEventListener('keyup',e=>{
-      if(e.code==='Space' && document.activeElement.tagName!=='INPUT'){ stopSpin(); }
+    window.addEventListener('keyup', e=>{
+      if(e.code==='Space' && document.activeElement.tagName!=='INPUT'){
+        stopSpin();
+      }
     });
 
+    // ---- Mobile button (press & hold) ----
+    if(btnSpin){
+      const start = (e)=>{ e.preventDefault(); startSpin(); };
+      const stop  = (e)=>{ e.preventDefault(); stopSpin(); };
+
+      btnSpin.addEventListener('mousedown', start);
+      btnSpin.addEventListener('touchstart', start, {passive:false});
+
+      btnSpin.addEventListener('mouseup', stop);
+      btnSpin.addEventListener('mouseleave', stop);
+      btnSpin.addEventListener('touchend', stop);
+      btnSpin.addEventListener('touchcancel', stop);
+    }
+
+    // Init
     applyThemes();
     renderDie(1,die1); renderDie(1,die2);
     updateScore();
